@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { removeAuth, getUser } from '../utils/auth'
 import { 
-  House, 
+  Home, 
   Settings,
   Menu,
   X,
@@ -49,7 +49,7 @@ export default function LayoutPadrao() {
   const menuItems = [
     {
       to: '/dashboard',
-      icon: House,
+      icon: Home,
       label: 'Dashboard',
       end: true
     },
