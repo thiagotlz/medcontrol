@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import ConfirmModal from '../components/ConfirmModal'
+import { CheckCircle, AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
 
 const FlashMessageContext = createContext()
 
@@ -176,8 +177,6 @@ const FlashMessageContainer = ({ messages, onRemove }) => {
 
 // Componente Individual de Flash Message
 const FlashMessageItem = ({ message, onRemove }) => {
-  const { CheckCircle, AlertCircle, AlertTriangle, Info, X } = require('lucide-react')
-
   const getIcon = () => {
     switch (message.type) {
       case 'success': return <CheckCircle size={20} />
