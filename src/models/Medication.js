@@ -17,7 +17,14 @@ class Medication {
   // Criar medicamento
   static async create({ user_id, name, description, dosage, frequency_hours, start_time, duration_days }) {
     try {
-      const started_at = duration_days ? new Date().toISOString().split('T')[0] : null
+      // Criar data de início apenas se duration_days foi fornecida
+      let started_at = null
+      if (duration_days) {
+        const today = new Date()
+        // Usar UTC para evitar problemas de timezone
+        const utcDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+        started_at = utcDate.toISOString().split('T')[0]
+      }
       
       const result = await query(
         `INSERT INTO medications (user_id, name, description, dosage, frequency_hours, start_time, duration_days, started_at) 
@@ -109,8 +116,10 @@ class Medication {
         
         // Se está definindo duration_days pela primeira vez, definir started_at
         if (data.duration_days && !this.started_at) {
+          const today = new Date()
+          const utcDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
           fields.push('started_at = ?')
-          values.push(new Date().toISOString().split('T')[0])
+          values.push(utcDate.toISOString().split('T')[0])
         }
       }
       
@@ -164,6 +173,11 @@ class Medication {
     const now = new Date()
     const [hours, minutes] = this.start_time.split(':').map(Number)
     
+    // Validar horário
+    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      throw new Error(`Horário inválido: ${this.start_time}`)
+    }
+    
     // Começar do próximo horário possível
     const startDate = new Date()
     startDate.setHours(hours, minutes, 0, 0)
@@ -177,9 +191,13 @@ class Medication {
     const endDate = new Date(now)
     endDate.setDate(endDate.getDate() + days)
     
+    // Converter frequência em horas para milissegundos
+    const frequencyMs = this.frequency_hours * 60 * 60 * 1000
+    
     while (currentTime <= endDate) {
       times.push(new Date(currentTime))
-      currentTime.setHours(currentTime.getHours() + this.frequency_hours)
+      // Usar milissegundos para maior precisão
+      currentTime = new Date(currentTime.getTime() + frequencyMs)
     }
     
     return times
@@ -196,26 +214,39 @@ class Medication {
       return null
     }
 
-    const startDate = new Date(this.started_at)
-    const currentDate = new Date()
-    const endDate = new Date(startDate)
-    endDate.setDate(endDate.getDate() + this.duration_days)
+    try {
+      const startDate = new Date(this.started_at + 'T00:00:00Z') // Adicionar timezone UTC
+      const currentDate = new Date()
+      
+      // Normalizar current date para evitar problemas de timezone
+      const currentDateNormalized = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate())
+      const startDateNormalized = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+      
+      const endDate = new Date(startDateNormalized)
+      endDate.setDate(endDate.getDate() + this.duration_days)
 
-    const totalDays = this.duration_days
-    const daysPassed = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24))
-    const daysRemaining = Math.max(0, totalDays - daysPassed)
-    
-    const progressPercentage = Math.min(100, Math.max(0, (daysPassed / totalDays) * 100))
+      const totalDays = this.duration_days
+      
+      // Calcular diferença em dias de forma mais robusta
+      const timeDiff = currentDateNormalized.getTime() - startDateNormalized.getTime()
+      const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+      const daysRemaining = Math.max(0, totalDays - daysPassed)
+      
+      const progressPercentage = Math.min(100, Math.max(0, (daysPassed / totalDays) * 100))
 
-    return {
-      totalDays,
-      daysPassed: Math.max(0, daysPassed),
-      daysRemaining,
-      progressPercentage: Math.round(progressPercentage),
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      isCompleted: daysPassed >= totalDays,
-      isActive: daysPassed >= 0 && daysPassed < totalDays
+      return {
+        totalDays,
+        daysPassed: Math.max(0, daysPassed),
+        daysRemaining,
+        progressPercentage: Math.round(progressPercentage * 100) / 100, // Manter 2 casas decimais
+        startDate: startDateNormalized.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        isCompleted: daysPassed >= totalDays,
+        isActive: daysPassed >= 0 && daysPassed < totalDays
+      }
+    } catch (error) {
+      console.error('Erro ao calcular progresso:', error)
+      return null
     }
   }
 

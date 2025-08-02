@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { 
-  Settings as SettingsIcon, 
   Mail, 
-  Server, 
   Shield, 
   TestTube,
   Save,
@@ -10,7 +8,6 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Info,
   Eye,
   EyeOff
 } from 'lucide-react'
@@ -139,7 +136,6 @@ export default function Settings() {
       <div className="settings-header">
         <div className="settings-title-section">
           <h1 className="settings-title">
-            <SettingsIcon size={28} />
             Configurações
           </h1>
           <p className="settings-subtitle">
@@ -152,7 +148,6 @@ export default function Settings() {
       {status && (
         <div className="settings-status">
           <h2 className="section-title">
-            <Shield size={20} />
             Status das Configurações
           </h2>
           
@@ -217,11 +212,10 @@ export default function Settings() {
       {/* Formulário */}
       <form onSubmit={handleSubmit} className="settings-form">
         {/* Configurações do Pushover */}
-        <div className="settings-section">
-          <h2 className="section-title">
-            <Mail size={20} />
+        <div className="form-section">
+          <h3 className="form-section-title">
             Configurações do Pushover
-          </h2>
+          </h3>
           <p className="section-description">
             Configure o email que receberá as notificações e as encaminhará para seu app Pushover
           </p>
@@ -244,7 +238,6 @@ export default function Settings() {
               />
             </div>
             <div className="input-helper">
-              <Info size={14} />
               <span>Este é o email que você configurou no app Pushover para receber notificações</span>
             </div>
           </div>
@@ -264,11 +257,10 @@ export default function Settings() {
         </div>
 
         {/* Configurações SMTP */}
-        <div className="settings-section">
-          <h2 className="section-title">
-            <Server size={20} />
+        <div className="form-section">
+          <h3 className="form-section-title">
             Configurações do Servidor SMTP
-          </h2>
+          </h3>
           <p className="section-description">
             Configure seu servidor de email para enviar as notificações
           </p>
@@ -310,53 +302,57 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="input-group">
-            <label htmlFor="smtp_user" className="input-label">
-              Email SMTP *
-            </label>
-            <div className="input-with-icon">
-              <Mail className="input-icon" size={16} />
-              <input
-                type="email"
-                id="smtp_user"
-                name="smtp_user"
-                placeholder="seu-email@gmail.com"
-                value={settings.smtp_user}
-                onChange={(e) => handleInputChange('smtp_user', e.target.value)}
-                disabled={saving}
-                className="input-field"
-              />
+          <div className="input-row">
+            <div className="input-group">
+              <label htmlFor="smtp_user" className="input-label">
+                Email SMTP *
+              </label>
+              <div className="input-with-icon">
+                <Mail className="input-icon" size={16} />
+                <input
+                  type="email"
+                  id="smtp_user"
+                  name="smtp_user"
+                  placeholder="seu-email@gmail.com"
+                  value={settings.smtp_user}
+                  onChange={(e) => handleInputChange('smtp_user', e.target.value)}
+                  disabled={saving}
+                  className="input-field"
+                />
+              </div>
+              <div className="input-helper">
+                <span>Email usado para autenticação no servidor SMTP</span>
+              </div>
             </div>
-          </div>
 
-          <div className="input-group">
-            <label htmlFor="smtp_password" className="input-label">
-              Senha SMTP *
-            </label>
-            <div className="input-with-icon">
-              <Shield className="input-icon" size={16} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="smtp_password"
-                name="smtp_password"
-                placeholder="Sua senha ou senha de app"
-                value={settings.smtp_password}
-                onChange={(e) => handleInputChange('smtp_password', e.target.value)}
-                disabled={saving}
-                className="input-field"
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            <div className="input-helper">
-              <Info size={14} />
-              <span>Para Gmail, use uma senha de app. Para outros provedores, use sua senha normal.</span>
+            <div className="input-group">
+              <label htmlFor="smtp_password" className="input-label">
+                Senha SMTP *
+              </label>
+              <div className="password-input-container">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="smtp_password"
+                  name="smtp_password"
+                  placeholder="Sua senha ou senha de app"
+                  value={settings.smtp_password}
+                  onChange={(e) => handleInputChange('smtp_password', e.target.value)}
+                  disabled={saving}
+                  className="input-field password-input"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  disabled={saving}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className="input-helper">
+                <span>Para Gmail, use uma senha de app. Para outros provedores, use sua senha normal.</span>
+              </div>
             </div>
           </div>
 
@@ -372,7 +368,6 @@ export default function Settings() {
               <span className="checkbox-text">Usar conexão segura (SSL/TLS)</span>
             </label>
             <div className="input-helper">
-              <Info size={14} />
               <span>Recomendado para portas 465 (SSL) e 587 (TLS)</span>
             </div>
           </div>
@@ -413,9 +408,8 @@ export default function Settings() {
       </form>
 
       {/* Guia de configuração */}
-      <div className="settings-help">
-        <h3 className="help-title">
-          <Info size={20} />
+      <div className="form-section">
+        <h3 className="form-section-title">
           Como Configurar
         </h3>
         

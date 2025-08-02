@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Pill, Clock, Calendar, Loader, Info } from 'lucide-react'
+import { X, Clock, Calendar, Loader } from 'lucide-react'
 import { medicationsAPI } from '../utils/api'
 
 export default function MedicationModal({ medication, onClose, onSuccess }) {
@@ -9,7 +9,8 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
     dosage: '',
     frequency_hours: '',
     start_time: '',
-    duration_days: ''
+    duration_days: '',
+    active: true
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -30,7 +31,8 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
         dosage: medication.dosage || '',
         frequency_hours: isCustom ? 'custom' : frequency,
         start_time: medication.start_time || '',
-        duration_days: medication.duration_days || ''
+        duration_days: medication.duration_days || '',
+        active: medication.active !== undefined ? medication.active : true
       })
       
       if (isCustom) {
@@ -170,9 +172,9 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
     if (!customFrequency) return ''
     
     const parsed = parseCustomFrequency(customFrequency)
-    if (!parsed) return '❌ Formato inválido'
+    if (!parsed) return 'Formato inválido'
     
-    let preview = `✅ ${parsed} horas`
+    let preview = `${parsed} horas`
     
     // Adicionar contexto útil
     if (parsed < 1) {
@@ -203,7 +205,6 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
         {/* Header */}
         <div className="modal-header">
           <div className="modal-title">
-            <Pill size={24} />
             <span>{medication ? 'Editar Medicamento' : 'Novo Medicamento'}</span>
           </div>
           <button className="modal-close" onClick={onClose}>
@@ -214,47 +215,58 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
         {/* Body */}
         <div className="modal-body">
           <form onSubmit={handleSubmit} className="medication-form">
-            {/* Nome do medicamento */}
-            <div className="input-group">
-              <label htmlFor="name" className="input-label">
-                Nome do medicamento *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="Ex: Paracetamol"
-                required
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                disabled={loading}
-                className="input-field"
-              />
+            {/* Seção: Informações Básicas */}
+            <div className="form-section">
+              <h3 className="form-section-title">Informações Básicas</h3>
+              
+              <div className="input-row">
+                <div className="input-group">
+                  <label htmlFor="name" className="input-label">
+                    Nome do medicamento *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Ex: Paracetamol, Dipirona"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    disabled={loading}
+                    className="input-field"
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label htmlFor="dosage" className="input-label">
+                    Dosagem
+                  </label>
+                  <input
+                    type="text"
+                    id="dosage"
+                    name="dosage"
+                    placeholder="Ex: 500mg, 1 comprimido, 5ml"
+                    value={formData.dosage}
+                    onChange={(e) => handleInputChange('dosage', e.target.value)}
+                    disabled={loading}
+                    className="input-field"
+                  />
+                  <div className="input-helper">
+                    <span>Especifique a quantidade por dose</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Dosagem */}
-            <div className="input-group">
-              <label htmlFor="dosage" className="input-label">
-                Dosagem
-              </label>
-              <input
-                type="text"
-                id="dosage"
-                name="dosage"
-                placeholder="Ex: 500mg, 1 comprimido, 5ml"
-                value={formData.dosage}
-                onChange={(e) => handleInputChange('dosage', e.target.value)}
-                disabled={loading}
-                className="input-field"
-              />
-            </div>
-
-            {/* Frequência e Horário */}
-            <div className="input-row">
-              <div className="input-group">
-                <label htmlFor="frequency_hours" className="input-label">
-                  Frequência (horas) *
-                </label>
+            {/* Seção: Frequência e Horários */}
+            <div className="form-section">
+              <h3 className="form-section-title">Frequência e Horários</h3>
+              
+              <div className="input-row">
+                <div className="input-group">
+                  <label htmlFor="frequency_hours" className="input-label">
+                    Frequência *
+                  </label>
                 <select
                   id="frequency_hours"
                   name="frequency_hours"
@@ -276,7 +288,7 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                   <option value="48">48 horas (1x/2 dias)</option>
                   <option value="72">72 horas (1x/3 dias)</option>
                   <option value="168">168 horas (1x/semana)</option>
-                  <option value="custom">⚙️ Personalizado</option>
+                  <option value="custom">Personalizado</option>
                 </select>
                 
                 {/* Campo de frequência personalizada */}
@@ -292,7 +304,6 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                       style={{ fontSize: '14px' }}
                     />
                     <div className="input-helper" style={{ marginTop: '4px' }}>
-                      <Info size={14} />
                       <span>
                         <strong>Formatos aceitos:</strong><br/>
                         • <code>8h</code> ou <code>8 horas</code><br/>
@@ -315,77 +326,153 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                     )}
                   </div>
                 )}
-              </div>
+                </div>
 
-              <div className="input-group">
-                <label htmlFor="start_time" className="input-label">
-                  Primeiro horário *
-                </label>
-                <div className="input-with-icon">
-                  <Clock className="input-icon" size={16} />
-                  <input
-                    type="time"
-                    id="start_time"
-                    name="start_time"
-                    required
-                    value={formData.start_time}
-                    onChange={(e) => handleInputChange('start_time', e.target.value)}
-                    disabled={loading}
-                    className="input-field"
-                  />
+                <div className="input-group">
+                  <label htmlFor="start_time" className="input-label">
+                    Primeiro horário *
+                  </label>
+                  <div className="input-with-icon">
+                    <Clock className="input-icon" size={16} />
+                    <input
+                      type="time"
+                      id="start_time"
+                      name="start_time"
+                      required
+                      value={formData.start_time}
+                      onChange={(e) => handleInputChange('start_time', e.target.value)}
+                      disabled={loading}
+                      className="input-field"
+                    />
+                  </div>
+                  <div className="input-helper">
+                    <span>Horário da primeira dose ou dose de referência</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Duração do tratamento */}
-            <div className="input-group">
-              <label htmlFor="duration_days" className="input-label">
-                Duração do tratamento (dias)
-              </label>
-              <div className="input-with-icon">
-                <Calendar className="input-icon" size={16} />
-                <input
-                  type="number"
-                  id="duration_days"
-                  name="duration_days"
-                  min="1"
-                  max="365"
-                  placeholder="Ex: 7, 14, 30 (deixe vazio para contínuo)"
-                  value={formData.duration_days}
-                  onChange={(e) => handleInputChange('duration_days', e.target.value)}
-                  disabled={loading}
-                  className="input-field"
-                />
-              </div>
-              <div className="input-helper">
-                <Info size={14} />
-                <span>Deixe vazio para tratamento contínuo. Defina para ver gráficos de progresso.</span>
-              </div>
-            </div>
-
-            {/* Observações */}
-            <div className="input-group">
-              <label htmlFor="description" className="input-label">
-                Observações
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Instruções especiais, observações médicas, etc."
-                rows="3"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                disabled={loading}
-                className="input-field textarea-field"
-              />
-            </div>
-
-            {/* Medicação já iniciada */}
-            {!medication && (
+            {/* Seção: Duração e Observações */}
+            <div className="form-section">
+              <h3 className="form-section-title">Duração e Observações</h3>
+              
               <div className="input-group">
-                <label className="input-label">
-                  Você já tomou essa medicação? *
+                <label htmlFor="duration_days" className="input-label">
+                  Duração do tratamento (dias)
                 </label>
+                <div className="input-with-icon">
+                  <Calendar className="input-icon" size={16} />
+                  <input
+                    type="number"
+                    id="duration_days"
+                    name="duration_days"
+                    min="1"
+                    max="365"
+                    placeholder="Ex: 7, 14, 30"
+                    value={formData.duration_days}
+                    onChange={(e) => handleInputChange('duration_days', e.target.value)}
+                    disabled={loading}
+                    className="input-field"
+                  />
+                </div>
+                <div className="input-helper">
+                  <span>Deixe vazio para tratamento contínuo. Defina um valor para acompanhar o progresso.</span>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="description" className="input-label">
+                  Observações
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  placeholder="Instruções especiais, observações médicas, orientações de uso..."
+                  rows="3"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  disabled={loading}
+                  className="input-field textarea-field"
+                />
+                <div className="input-helper">
+                  <span>Informações adicionais sobre o medicamento ou tratamento</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção: Status do Medicamento (apenas para edição) */}
+            {medication && (
+              <div className="form-section">
+                <h3 className="form-section-title">Status do Medicamento</h3>
+                
+                <div className="input-row">
+                  <div className="input-group">
+                    <label className="input-label">
+                      Status do tratamento
+                    </label>
+                    <div className="radio-group" style={{ 
+                      display: 'flex', 
+                      gap: 'var(--spacing-md)', 
+                      marginTop: 'var(--spacing-sm)' 
+                    }}>
+                      <label className="radio-option" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-sm)',
+                        cursor: 'pointer',
+                        padding: 'var(--spacing-sm)',
+                        borderRadius: 'var(--border-radius-md)',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: formData.active ? 'var(--color-primary-light)' : 'transparent'
+                      }}>
+                        <input
+                          type="radio"
+                          name="medicationStatus"
+                          value="active"
+                          checked={formData.active}
+                          onChange={() => handleInputChange('active', true)}
+                          disabled={loading}
+                        />
+                        <span>Ativo</span>
+                      </label>
+                      
+                      <label className="radio-option" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-sm)',
+                        cursor: 'pointer',
+                        padding: 'var(--spacing-sm)',
+                        borderRadius: 'var(--border-radius-md)',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: !formData.active ? 'var(--color-primary-light)' : 'transparent'
+                      }}>
+                        <input
+                          type="radio"
+                          name="medicationStatus"
+                          value="inactive"
+                          checked={!formData.active}
+                          onChange={() => handleInputChange('active', false)}
+                          disabled={loading}
+                        />
+                        <span>Pausado</span>
+                      </label>
+                    </div>
+                    <div className="input-helper">
+                      <span>Medicamentos pausados não geram lembretes automáticos</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seção: Status Atual (apenas para novos medicamentos) */}
+            {!medication && (
+              <div className="form-section">
+                <h3 className="form-section-title">Status Atual</h3>
+                <div className="input-group">
+                  <label className="input-label">
+                    Você já começou este tratamento? *
+                  </label>
                 <div className="radio-group" style={{ 
                   display: 'flex', 
                   gap: 'var(--spacing-md)', 
@@ -465,7 +552,6 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                           className="input-field"
                         />
                         <div className="input-helper">
-                          <Info size={14} />
                           <span>Conte apenas as doses efetivamente tomadas</span>
                         </div>
                       </div>
@@ -488,13 +574,13 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                           />
                         </div>
                         <div className="input-helper">
-                          <Info size={14} />
                           <span>Use esta informação para calcular a próxima dose corretamente</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             )}
 

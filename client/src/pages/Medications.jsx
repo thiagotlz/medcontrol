@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { 
-  Pill, 
   Plus, 
   Edit, 
   Trash2, 
-  Clock, 
-  Calendar,
   Play,
   Pause,
   CheckCircle,
   AlertCircle,
-  TrendingUp,
   Timer
 } from 'lucide-react'
 import { medicationsAPI } from '../utils/api'
 import MedicationModal from '../components/MedicationModal'
 import ProgressChart from '../components/ProgressChart'
+import { useFlash } from '../contexts/FlashMessageContext'
 import '../styles/Medications.css'
 
 export default function Medications() {
@@ -24,6 +21,7 @@ export default function Medications() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingMedication, setEditingMedication] = useState(null)
   const [filter, setFilter] = useState('all') // all, active, completed, continuous
+  const flash = useFlash()
 
   useEffect(() => {
     loadMedications()
@@ -55,21 +53,28 @@ export default function Medications() {
   }
 
   const handleDeleteMedication = async (medication) => {
-    if (!confirm(`Tem certeza que deseja excluir "${medication.name}"?`)) {
-      return
-    }
+    const confirmed = await flash.confirm({
+      title: "Excluir medicamento",
+      message: `Tem certeza que deseja excluir "${medication.name}"? Esta ação não pode ser desfeita.`,
+      confirmText: "Excluir",
+      cancelText: "Cancelar",
+      type: "danger"
+    })
+
+    if (!confirmed) return
 
     try {
       const result = await medicationsAPI.delete(medication.id)
       
       if (result.success) {
         setMedications(prev => prev.filter(m => m.id !== medication.id))
+        flash.success('Medicamento excluído com sucesso')
       } else {
-        alert(result.message || 'Erro ao excluir medicamento')
+        flash.error(result.message || 'Erro ao excluir medicamento')
       }
     } catch (error) {
       console.error('Erro ao excluir medicamento:', error)
-      alert('Erro ao excluir medicamento')
+      flash.error('Erro ao excluir medicamento')
     }
   }
 
@@ -81,19 +86,21 @@ export default function Medications() {
         setMedications(prev => 
           prev.map(m => m.id === medication.id ? result.data : m)
         )
+        flash.success(`Medicamento ${result.data.active ? 'ativado' : 'pausado'} com sucesso`)
       } else {
-        alert(result.message || 'Erro ao alterar status do medicamento')
+        flash.error(result.message || 'Erro ao alterar status do medicamento')
       }
     } catch (error) {
       console.error('Erro ao alterar status:', error)
-      alert('Erro ao alterar status do medicamento')
+      flash.error('Erro ao alterar status do medicamento')
     }
   }
 
-  const handleModalSuccess = () => {
+  const handleModalSuccess = (isEditing) => {
     setIsModalOpen(false)
     setEditingMedication(null)
     loadMedications()
+    flash.success(isEditing ? 'Medicamento atualizado com sucesso' : 'Medicamento criado com sucesso')
   }
 
   const formatTime = (timeString) => {
@@ -135,9 +142,7 @@ export default function Medications() {
     return (
       <div className="loading-container">
         <div className="loading-container-column">
-          <div className="animate-spin">
-            <Pill size={48} className="loading-icon" />
-          </div>
+          <div className="animate-spin loading-spinner"></div>
           <p className="loading-text">Carregando medicamentos...</p>
         </div>
       </div>
@@ -150,7 +155,6 @@ export default function Medications() {
       <div className="medications-header">
         <div className="medications-title-section">
           <h1 className="medications-title">
-            <Pill size={28} />
             Medicamentos
           </h1>
           <p className="medications-subtitle">
@@ -199,7 +203,6 @@ export default function Medications() {
       {filteredMedications.filter(m => m.progress).length > 0 && (
         <div className="progress-section">
           <h2 className="section-title">
-            <TrendingUp size={20} />
             Progresso dos Tratamentos
           </h2>
           
@@ -220,13 +223,11 @@ export default function Medications() {
       {/* Lista de medicamentos */}
       <div className="medications-section">
         <h2 className="section-title">
-          <Pill size={20} />
           Lista de Medicamentos
         </h2>
 
         {filteredMedications.length === 0 ? (
           <div className="empty-state">
-            <Pill size={48} className="empty-icon" />
             <h3>Nenhum medicamento encontrado</h3>
             <p>
               {filter === 'all' 
@@ -298,13 +299,11 @@ export default function Medications() {
                   </div>
                   
                   <div className="detail-item">
-                    <Clock size={14} />
                     <strong>Horário:</strong> {formatTime(medication.start_time)}
                   </div>
 
                   {medication.duration_days && (
                     <div className="detail-item">
-                      <Calendar size={14} />
                       <strong>Duração:</strong> {medication.duration_days} dias
                     </div>
                   )}

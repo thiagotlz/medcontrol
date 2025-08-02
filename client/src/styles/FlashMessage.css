@@ -1,0 +1,208 @@
+/* Flash Message Styles - Baseado no Copyfy */
+.flash-message-container {
+  position: fixed;
+  top: 20px;
+  right: 70px;
+  z-index: 50000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.flash-message {
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all var(--transition-base);
+  cursor: pointer;
+  pointer-events: auto;
+  max-width: 100%;
+  animation: flashSlideIn 0.3s ease forwards;
+}
+
+.flash-message-visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.flash-message-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.flash-message-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.flash-message-text {
+  flex: 1;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-primary);
+}
+
+.flash-message-close {
+  flex-shrink: 0;
+  padding: var(--spacing-xs);
+  min-width: auto;
+  width: 32px;
+  height: 32px;
+}
+
+/* Types */
+.flash-message-success {
+  border-left: 4px solid var(--color-success);
+}
+
+.flash-message-success .flash-message-icon {
+  color: var(--color-success);
+}
+
+.flash-message-error {
+  border-left: 4px solid var(--color-error);
+}
+
+.flash-message-error .flash-message-icon {
+  color: var(--color-error);
+}
+
+.flash-message-warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.flash-message-warning .flash-message-icon {
+  color: var(--color-warning);
+}
+
+.flash-message-info {
+  border-left: 4px solid var(--color-info);
+}
+
+.flash-message-info .flash-message-icon {
+  color: var(--color-info);
+}
+
+/* Hover effects */
+.flash-message:hover {
+  transform: translateX(-4px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+}
+
+.flash-message-visible:hover {
+  transform: translateX(-4px) scale(1.02);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .flash-message-container {
+    top: 80px;
+    right: var(--spacing-lg);
+    left: var(--spacing-lg);
+    max-width: none;
+  }
+  
+  .flash-message {
+    padding: var(--spacing-md);
+  }
+  
+  .flash-message-text {
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .flash-message-container {
+    top: 70px;
+    right: var(--spacing-md);
+    left: var(--spacing-md);
+  }
+  
+  .flash-message {
+    padding: var(--spacing-sm);
+  }
+  
+  .flash-message-content {
+    gap: var(--spacing-sm);
+  }
+  
+  .flash-message-text {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Animations */
+@keyframes flashSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes flashSlideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Animation for removing messages */
+.flash-message:not(.flash-message-visible) {
+  animation: flashSlideOut 0.3s ease forwards;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .flash-message {
+  box-shadow: var(--shadow-xl);
+}
+
+/* Accessibility */
+.flash-message:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.flash-message-close:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* Loading state protection */
+.flash-message-container:empty {
+  display: none;
+}
+
+/* ===== CONFIRM MODAL ===== */
+.confirm-modal {
+  max-width: 400px;
+}
+
+.confirm-message {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  text-align: center;
+  margin: 0;
+}

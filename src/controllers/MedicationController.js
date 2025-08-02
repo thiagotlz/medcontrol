@@ -137,10 +137,27 @@ class MedicationController {
         
         // Validar se a data da última dose não é futura
         const lastTaken = new Date(lastTakenTime)
+        if (isNaN(lastTaken.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: 'Formato de data/hora inválido para a última dose'
+          })
+        }
+        
         if (lastTaken > new Date()) {
           return res.status(400).json({
             success: false,
             message: 'O horário da última dose não pode ser no futuro'
+          })
+        }
+        
+        // Validar se a data não é muito antiga (mais de 1 ano)
+        const oneYearAgo = new Date()
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+        if (lastTaken < oneYearAgo) {
+          return res.status(400).json({
+            success: false,
+            message: 'O horário da última dose não pode ser anterior a 1 ano'
           })
         }
       }
@@ -237,10 +254,10 @@ class MedicationController {
       }
       
       // Validações se fornecidos
-      if (frequency_hours && (frequency_hours < 1 || frequency_hours > 168)) {
+      if (frequency_hours && (frequency_hours < 0.5 || frequency_hours > 8760)) {
         return res.status(400).json({
           success: false,
-          message: 'Frequência deve ser entre 1 e 168 horas'
+          message: 'Frequência deve ser entre 0.5 e 8760 horas'
         })
       }
       
@@ -270,7 +287,7 @@ class MedicationController {
         name: name?.trim(),
         description: description?.trim(),
         dosage: dosage?.trim(),
-        frequency_hours: frequency_hours ? parseInt(frequency_hours) : undefined,
+        frequency_hours: frequency_hours ? parseFloat(frequency_hours) : undefined,
         start_time,
         duration_days: duration_days !== undefined ? (duration_days ? parseInt(duration_days) : null) : undefined,
         active

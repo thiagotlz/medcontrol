@@ -4,14 +4,10 @@ import {
   Pill, 
   Calendar, 
   TrendingUp, 
-  Settings,
   Plus,
-  Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  Activity,
-  Timer
+  AlertCircle
 } from 'lucide-react'
 import { medicationsAPI, settingsAPI } from '../utils/api'
 import { getUser } from '../utils/auth'
@@ -87,9 +83,7 @@ export default function Dashboard() {
     return (
       <div className="loading-container">
         <div className="loading-container-column">
-          <div className="animate-spin">
-            <Activity size={48} className="loading-icon" />
-          </div>
+          <div className="animate-spin loading-spinner"></div>
           <p className="loading-text">Carregando dashboard...</p>
         </div>
       </div>
@@ -181,7 +175,6 @@ export default function Dashboard() {
         <div className="dashboard-section">
           <div className="section-header">
             <h2 className="section-title">
-              <TrendingUp size={20} />
               Progresso dos Tratamentos
             </h2>
             <Link to="/medications" className="section-action">
@@ -209,7 +202,6 @@ export default function Dashboard() {
         <div className="dashboard-section">
           <div className="section-header">
             <h2 className="section-title">
-              <Activity size={20} />
               Medicamentos Ativos
             </h2>
             <Link to="/medications" className="section-action">
@@ -220,7 +212,6 @@ export default function Dashboard() {
           <div className="medications-list">
             {medications.length === 0 ? (
               <div className="empty-state">
-                <Pill size={48} className="empty-icon" />
                 <h3>Nenhum medicamento cadastrado</h3>
                 <p>Comece adicionando seus primeiros medicamentos</p>
                 <Link to="/medications" className="btn-action">
@@ -241,7 +232,6 @@ export default function Dashboard() {
                         A cada {medication.frequency_hours}h
                       </span>
                       <span className="medication-time">
-                        <Clock size={14} />
                         Próxima dose: {formatTime(medication.start_time)}
                       </span>
                     </div>
@@ -261,7 +251,6 @@ export default function Dashboard() {
         <div className="dashboard-section">
           <div className="section-header">
             <h2 className="section-title">
-              <Settings size={20} />
               Status das Configurações
             </h2>
             <Link to="/settings" className="section-action">
