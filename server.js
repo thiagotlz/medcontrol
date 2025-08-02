@@ -80,20 +80,27 @@ app.use((err, req, res, next) => {
   })
 })
 
-// Serve static files from React app in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client/dist')))
+// Serve static files from React app
+const fs = require('fs')
+const clientDistPath = path.join(__dirname, 'client/dist')
+const indexPath = path.join(clientDistPath, 'index.html')
+
+// Verificar se o build do React existe
+if (fs.existsSync(indexPath)) {
+  console.log('✅ Build do React encontrado, servindo aplicação web')
+  app.use(express.static(clientDistPath))
   
   // Catch all handler para React Router (deve ser o último)
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/dist/index.html'))
+    res.sendFile(indexPath)
   })
 } else {
-  // 404 handler para desenvolvimento
+  console.log('❌ Build do React não encontrado')
+  // 404 handler se não tiver build
   app.use('*', (req, res) => {
     res.status(404).json({ 
       success: false, 
-      message: 'Rota não encontrada' 
+      message: 'Aplicação web não disponível - build não encontrado' 
     })
   })
 }
