@@ -6,14 +6,14 @@ const compression = require('compression')
 const rateLimit = require('express-rate-limit')
 const path = require('path')
 const cronScheduler = require('./src/services/cronScheduler')
+const runMigrations = require('./src/migrations/runMigrations')
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// Trust proxy - necessário para rate limiting e IP detection em produção
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1)
-}
+// Trust proxy - necessário para rate limiting e IP detection
+// Configurar como true para ambientes com proxy reverso (Railway, Heroku, etc)
+app.set('trust proxy', true)
 
 // Middlewares de segurança
 app.use(helmet({
@@ -122,6 +122,14 @@ const startServer = async () => {
     if (!dbInitialized) {
       console.error('❌ Falha ao inicializar banco de dados')
       process.exit(1)
+    }
+
+    // Executar migrations
+    try {
+      await runMigrations()
+    } catch (error) {
+      console.error('❌ Erro ao executar migrations:', error)
+      // Não falhar o servidor por causa de migrations
     }
 
     app.listen(PORT, () => {
