@@ -41,6 +41,31 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')))
 
+// Health check route
+app.get('/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Servidor funcionando',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  })
+})
+
+// Debug route para verificar arquivos
+app.get('/debug', (req, res) => {
+  const fs = require('fs')
+  const clientDistPath = path.join(__dirname, 'client/dist')
+  const indexExists = fs.existsSync(path.join(clientDistPath, 'index.html'))
+  
+  res.json({
+    success: true,
+    clientDistPath,
+    indexExists,
+    files: fs.existsSync(clientDistPath) ? fs.readdirSync(clientDistPath) : 'Directory not found',
+    environment: process.env.NODE_ENV
+  })
+})
+
 // Routes
 app.use('/api/auth', require('./src/routes/auth.routes'))
 app.use('/api/medications', require('./src/routes/medication.routes'))
