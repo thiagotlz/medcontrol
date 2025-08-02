@@ -13,19 +13,74 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [customFrequency, setCustomFrequency] = useState('')
+  const [showCustomFrequency, setShowCustomFrequency] = useState(false)
 
   useEffect(() => {
     if (medication) {
+      const frequency = medication.frequency_hours || ''
+      const isCustom = frequency && !['1','2','3','4','6','8','12','24','48','72','168'].includes(frequency.toString())
+      
       setFormData({
         name: medication.name || '',
         description: medication.description || '',
         dosage: medication.dosage || '',
-        frequency_hours: medication.frequency_hours || '',
+        frequency_hours: isCustom ? 'custom' : frequency,
         start_time: medication.start_time || '',
         duration_days: medication.duration_days || ''
       })
+      
+      if (isCustom) {
+        setShowCustomFrequency(true)
+        setCustomFrequency(frequency.toString())
+      }
     }
   }, [medication])
+
+  // Função para formatar frequência personalizada
+  const parseCustomFrequency = (input) => {
+    if (!input) return null
+    
+    // Remove espaços e converte para minúsculas
+    const clean = input.toLowerCase().trim()
+    
+    // Padrões aceitos e suas conversões para horas
+    const patterns = [
+      // Formato: número + unidade
+      { regex: /^(\d+(?:\.\d+)?)\s*h(?:oras?)?$/i, multiplier: 1 },
+      { regex: /^(\d+(?:\.\d+)?)\s*d(?:ias?)?$/i, multiplier: 24 },
+      { regex: /^(\d+(?:\.\d+)?)\s*sem(?:anas?)?$/i, multiplier: 168 },
+      { regex: /^(\d+(?:\.\d+)?)\s*m(?:eses?)?$/i, multiplier: 720 }, // 30 dias
+      
+      // Formato: apenas número (assume horas)
+      { regex: /^(\d+(?:\.\d+)?)$/i, multiplier: 1 },
+      
+      // Formato: "X vezes por dia" -> 24/X horas
+      { regex: /^(\d+)\s*(?:x|vezes?)\s*(?:por|\/)\s*dia$/i, multiplier: (num) => 24 / num },
+      
+      // Formato: "de X em X horas"
+      { regex: /^(?:de\s*)?(\d+(?:\.\d+)?)\s*(?:em\s*\d+(?:\.\d+)?\s*)?h(?:oras?)?$/i, multiplier: 1 },
+    ]
+    
+    for (const pattern of patterns) {
+      const match = clean.match(pattern.regex)
+      if (match) {
+        const number = parseFloat(match[1])
+        if (isNaN(number) || number <= 0) continue
+        
+        const hours = typeof pattern.multiplier === 'function' 
+          ? pattern.multiplier(number) 
+          : number * pattern.multiplier
+          
+        // Limitar entre 0.5 e 8760 horas (1 ano)
+        if (hours >= 0.5 && hours <= 8760) {
+          return Math.round(hours * 100) / 100 // Arredondar para 2 casas decimais
+        }
+      }
+    }
+    
+    return null
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -33,9 +88,25 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
     setError('')
 
     try {
+      // Preparar dados para envio
+      let submitData = { ...formData }
+      
+      // Se frequência personalizada, processar o valor
+      if (formData.frequency_hours === 'custom') {
+        const parsedFrequency = parseCustomFrequency(customFrequency)
+        
+        if (!parsedFrequency) {
+          setError('Formato de frequência inválido. Use exemplos como: "8h", "2x por dia", "1.5 horas", etc.')
+          setLoading(false)
+          return
+        }
+        
+        submitData.frequency_hours = parsedFrequency
+      }
+
       const result = medication
-        ? await medicationsAPI.update(medication.id, formData)
-        : await medicationsAPI.create(formData)
+        ? await medicationsAPI.update(medication.id, submitData)
+        : await medicationsAPI.create(submitData)
 
       if (result.success) {
         onSuccess()
@@ -55,6 +126,52 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleFrequencyChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      frequency_hours: value
+    }))
+    
+    if (value === 'custom') {
+      setShowCustomFrequency(true)
+      setCustomFrequency('')
+    } else {
+      setShowCustomFrequency(false)
+      setCustomFrequency('')
+    }
+  }
+
+  const getFrequencyPreview = () => {
+    if (!customFrequency) return ''
+    
+    const parsed = parseCustomFrequency(customFrequency)
+    if (!parsed) return '❌ Formato inválido'
+    
+    let preview = `✅ ${parsed} horas`
+    
+    // Adicionar contexto útil
+    if (parsed < 1) {
+      preview += ` (${Math.round(parsed * 60)} minutos)`
+    } else if (parsed === 24) {
+      preview += ' (1x por dia)'
+    } else if (parsed === 12) {
+      preview += ' (2x por dia)'
+    } else if (parsed === 8) {
+      preview += ' (3x por dia)'
+    } else if (parsed === 6) {
+      preview += ' (4x por dia)'
+    } else if (parsed > 24) {
+      preview += ` (1x a cada ${Math.round(parsed / 24 * 10) / 10} dias)`
+    } else {
+      const timesPerDay = Math.round(24 / parsed * 10) / 10
+      if (timesPerDay === Math.floor(timesPerDay)) {
+        preview += ` (${timesPerDay}x por dia)`
+      }
+    }
+    
+    return preview
   }
 
   return (
@@ -120,7 +237,7 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                   name="frequency_hours"
                   required
                   value={formData.frequency_hours}
-                  onChange={(e) => handleInputChange('frequency_hours', e.target.value)}
+                  onChange={(e) => handleFrequencyChange(e.target.value)}
                   disabled={loading}
                   className="input-field select-field"
                 >
@@ -136,7 +253,45 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                   <option value="48">48 horas (1x/2 dias)</option>
                   <option value="72">72 horas (1x/3 dias)</option>
                   <option value="168">168 horas (1x/semana)</option>
+                  <option value="custom">⚙️ Personalizado</option>
                 </select>
+                
+                {/* Campo de frequência personalizada */}
+                {showCustomFrequency && (
+                  <div className="custom-frequency-container" style={{ marginTop: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Ex: 8h, 2x por dia, 1.5 horas, 5 dias"
+                      value={customFrequency}
+                      onChange={(e) => setCustomFrequency(e.target.value)}
+                      disabled={loading}
+                      className="input-field"
+                      style={{ fontSize: '14px' }}
+                    />
+                    <div className="input-helper" style={{ marginTop: '4px' }}>
+                      <Info size={14} />
+                      <span>
+                        <strong>Formatos aceitos:</strong><br/>
+                        • <code>8h</code> ou <code>8 horas</code><br/>
+                        • <code>2x por dia</code> ou <code>3 vezes por dia</code><br/>
+                        • <code>1.5 dias</code> ou <code>2 semanas</code><br/>
+                        • <code>5</code> (assume horas)
+                      </span>
+                    </div>
+                    {customFrequency && (
+                      <div className="frequency-preview" style={{ 
+                        marginTop: '8px', 
+                        padding: '8px', 
+                        backgroundColor: 'var(--surface-secondary)', 
+                        borderRadius: 'var(--border-radius-sm)',
+                        fontSize: '14px',
+                        fontWeight: 'var(--font-weight-medium)'
+                      }}>
+                        {getFrequencyPreview()}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="input-group">
