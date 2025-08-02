@@ -78,7 +78,10 @@ class MedicationController {
   // Criar medicamento
   static async create(req, res) {
     try {
-      const { name, description, dosage, frequency_hours, start_time, duration_days } = req.body
+      const { 
+        name, description, dosage, frequency_hours, start_time, duration_days,
+        alreadyTaken, dosesTaken, lastTakenTime 
+      } = req.body
       const userId = req.user.id
       
       // Validações
@@ -89,10 +92,10 @@ class MedicationController {
         })
       }
       
-      if (frequency_hours < 1 || frequency_hours > 168) { // 1 hora a 1 semana
+      if (frequency_hours < 0.5 || frequency_hours > 8760) { // 30 minutos a 1 ano
         return res.status(400).json({
           success: false,
-          message: 'Frequência deve ser entre 1 e 168 horas'
+          message: 'Frequência deve ser entre 0.5 e 8760 horas'
         })
       }
       
@@ -115,6 +118,32 @@ class MedicationController {
           })
         }
       }
+
+      // Validações para doses já tomadas
+      if (alreadyTaken) {
+        if (!dosesTaken || dosesTaken < 1) {
+          return res.status(400).json({
+            success: false,
+            message: 'Número de doses tomadas é obrigatório quando o tratamento já foi iniciado'
+          })
+        }
+        
+        if (!lastTakenTime) {
+          return res.status(400).json({
+            success: false,
+            message: 'Horário da última dose é obrigatório quando o tratamento já foi iniciado'
+          })
+        }
+        
+        // Validar se a data da última dose não é futura
+        const lastTaken = new Date(lastTakenTime)
+        if (lastTaken > new Date()) {
+          return res.status(400).json({
+            success: false,
+            message: 'O horário da última dose não pode ser no futuro'
+          })
+        }
+      }
       
       // Criar medicamento
       const medication = await Medication.create({
@@ -122,14 +151,47 @@ class MedicationController {
         name: name.trim(),
         description: description?.trim() || null,
         dosage: dosage?.trim() || null,
-        frequency_hours: parseInt(frequency_hours),
+        frequency_hours: parseFloat(frequency_hours),
         start_time,
         duration_days: duration_days ? parseInt(duration_days) : null
       })
       
-      // Criar agendamentos iniciais (próximos 7 dias)
-      const scheduleTimes = medication.getNextScheduleTimes(7)
-      await MedicationSchedule.createMultipleForMedication(medication.id, scheduleTimes)
+      // Se já tomou doses, criar registros históricos e calcular próxima dose baseada na última
+      if (alreadyTaken) {
+        const lastTaken = new Date(lastTakenTime)
+        const frequencyMs = parseFloat(frequency_hours) * 60 * 60 * 1000
+        
+        // Criar registros para as doses já tomadas
+        const takenSchedules = []
+        for (let i = 0; i < dosesTaken; i++) {
+          const scheduleTime = new Date(lastTaken.getTime() - (frequencyMs * (dosesTaken - 1 - i)))
+          takenSchedules.push({
+            medication_id: medication.id,
+            scheduled_time: scheduleTime,
+            status: 'taken',
+            taken_at: scheduleTime
+          })
+        }
+        
+        if (takenSchedules.length > 0) {
+          await MedicationSchedule.createMultiple(takenSchedules)
+        }
+        
+        // Criar próximos agendamentos baseados na última dose
+        const nextScheduleTime = new Date(lastTaken.getTime() + frequencyMs)
+        const scheduleTimes = []
+        
+        for (let i = 0; i < 7; i++) {
+          const scheduleTime = new Date(nextScheduleTime.getTime() + (frequencyMs * i))
+          scheduleTimes.push(scheduleTime)
+        }
+        
+        await MedicationSchedule.createMultipleForMedication(medication.id, scheduleTimes)
+      } else {
+        // Criar agendamentos iniciais normais (próximos 7 dias)
+        const scheduleTimes = medication.getNextScheduleTimes(7)
+        await MedicationSchedule.createMultipleForMedication(medication.id, scheduleTimes)
+      }
       
       res.status(201).json({
         success: true,

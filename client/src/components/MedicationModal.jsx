@@ -15,6 +15,9 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
   const [error, setError] = useState('')
   const [customFrequency, setCustomFrequency] = useState('')
   const [showCustomFrequency, setShowCustomFrequency] = useState(false)
+  const [alreadyTaken, setAlreadyTaken] = useState(false)
+  const [dosesTaken, setDosesTaken] = useState('')
+  const [lastTakenTime, setLastTakenTime] = useState('')
 
   useEffect(() => {
     if (medication) {
@@ -102,6 +105,26 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
         }
         
         submitData.frequency_hours = parsedFrequency
+      }
+
+      // Validações para doses já tomadas
+      if (alreadyTaken) {
+        if (!dosesTaken || parseInt(dosesTaken) < 1) {
+          setError('Informe quantas doses já foram tomadas')
+          setLoading(false)
+          return
+        }
+        
+        if (!lastTakenTime) {
+          setError('Informe o horário da última dose tomada')
+          setLoading(false)
+          return
+        }
+        
+        // Adicionar dados das doses já tomadas
+        submitData.alreadyTaken = true
+        submitData.dosesTaken = parseInt(dosesTaken)
+        submitData.lastTakenTime = lastTakenTime
       }
 
       const result = medication
@@ -356,6 +379,124 @@ export default function MedicationModal({ medication, onClose, onSuccess }) {
                 className="input-field textarea-field"
               />
             </div>
+
+            {/* Medicação já iniciada */}
+            {!medication && (
+              <div className="input-group">
+                <label className="input-label">
+                  Você já tomou essa medicação? *
+                </label>
+                <div className="radio-group" style={{ 
+                  display: 'flex', 
+                  gap: 'var(--spacing-md)', 
+                  marginTop: 'var(--spacing-sm)' 
+                }}>
+                  <label className="radio-option" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-sm)',
+                    cursor: 'pointer',
+                    padding: 'var(--spacing-sm)',
+                    borderRadius: 'var(--border-radius-md)',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: !alreadyTaken ? 'var(--color-primary-light)' : 'transparent'
+                  }}>
+                    <input
+                      type="radio"
+                      name="alreadyTaken"
+                      value="false"
+                      checked={!alreadyTaken}
+                      onChange={() => {
+                        setAlreadyTaken(false)
+                        setDosesTaken('')
+                        setLastTakenTime('')
+                      }}
+                      disabled={loading}
+                    />
+                    <span>Não, é a primeira dose</span>
+                  </label>
+                  
+                  <label className="radio-option" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-sm)',
+                    cursor: 'pointer',
+                    padding: 'var(--spacing-sm)',
+                    borderRadius: 'var(--border-radius-md)',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: alreadyTaken ? 'var(--color-primary-light)' : 'transparent'
+                  }}>
+                    <input
+                      type="radio"
+                      name="alreadyTaken"
+                      value="true"
+                      checked={alreadyTaken}
+                      onChange={() => setAlreadyTaken(true)}
+                      disabled={loading}
+                    />
+                    <span>Sim, já comecei o tratamento</span>
+                  </label>
+                </div>
+                
+                {/* Campos condicionais para doses já tomadas */}
+                {alreadyTaken && (
+                  <div className="taken-doses-container" style={{ 
+                    marginTop: 'var(--spacing-md)',
+                    padding: 'var(--spacing-md)',
+                    backgroundColor: 'var(--surface-secondary)',
+                    borderRadius: 'var(--border-radius-md)',
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <div className="input-row">
+                      <div className="input-group">
+                        <label htmlFor="dosesTaken" className="input-label">
+                          Quantas doses já foram tomadas? *
+                        </label>
+                        <input
+                          type="number"
+                          id="dosesTaken"
+                          name="dosesTaken"
+                          min="1"
+                          max="100"
+                          placeholder="Ex: 3"
+                          value={dosesTaken}
+                          onChange={(e) => setDosesTaken(e.target.value)}
+                          disabled={loading}
+                          className="input-field"
+                        />
+                        <div className="input-helper">
+                          <Info size={14} />
+                          <span>Conte apenas as doses efetivamente tomadas</span>
+                        </div>
+                      </div>
+
+                      <div className="input-group">
+                        <label htmlFor="lastTakenTime" className="input-label">
+                          Horário da última dose tomada *
+                        </label>
+                        <div className="input-with-icon">
+                          <Clock className="input-icon" size={16} />
+                          <input
+                            type="datetime-local"
+                            id="lastTakenTime"
+                            name="lastTakenTime"
+                            value={lastTakenTime}
+                            onChange={(e) => setLastTakenTime(e.target.value)}
+                            disabled={loading}
+                            className="input-field"
+                            max={new Date().toISOString().slice(0, 16)}
+                          />
+                        </div>
+                        <div className="input-helper">
+                          <Info size={14} />
+                          <span>Use esta informação para calcular a próxima dose corretamente</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Erro */}
             {error && (

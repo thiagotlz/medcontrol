@@ -167,6 +167,34 @@ class MedicationSchedule {
     }
   }
 
+  // Criar múltiplos agendamentos com dados completos
+  static async createMultiple(schedulesData) {
+    try {
+      const schedules = []
+      
+      for (const scheduleData of schedulesData) {
+        const result = await query(
+          `INSERT INTO medication_schedules 
+           (medication_id, scheduled_time, status, taken_at) 
+           VALUES (?, ?, ?, ?)`,
+          [
+            scheduleData.medication_id,
+            scheduleData.scheduled_time,
+            scheduleData.status || 'pending',
+            scheduleData.taken_at || null
+          ]
+        )
+        
+        const schedule = await MedicationSchedule.findById(result.insertId)
+        schedules.push(schedule)
+      }
+      
+      return schedules
+    } catch (error) {
+      throw error
+    }
+  }
+
   // Limpar agendamentos antigos
   static async cleanupOldSchedules(daysOld = 30) {
     try {
