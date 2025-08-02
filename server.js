@@ -6,7 +6,6 @@ const compression = require('compression')
 const rateLimit = require('express-rate-limit')
 const path = require('path')
 const cronScheduler = require('./src/services/cronScheduler')
-const runMigrations = require('./src/migrations/runMigrations')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -124,13 +123,6 @@ const startServer = async () => {
       process.exit(1)
     }
 
-    // Executar migrations
-    try {
-      await runMigrations()
-    } catch (error) {
-      console.error('❌ Erro ao executar migrations:', error)
-      // Não falhar o servidor por causa de migrations
-    }
 
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`)
