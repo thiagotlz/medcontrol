@@ -77,7 +77,7 @@ class UserSettings {
         values.push(data.smtp_user)
       }
       
-      if (data.smtp_password !== undefined) {
+      if (data.smtp_password !== undefined && data.smtp_password !== null) {
         fields.push('smtp_password = ?')
         values.push(data.smtp_password)
       }

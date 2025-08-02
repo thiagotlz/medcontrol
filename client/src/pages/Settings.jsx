@@ -77,7 +77,13 @@ export default function Settings() {
     setMessage({ type: '', text: '' })
 
     try {
-      const result = await settingsAPI.update(settings)
+      // Preparar dados para envio - não enviar senha se estiver mascarada
+      const dataToSend = { ...settings }
+      if (dataToSend.smtp_password === '***') {
+        delete dataToSend.smtp_password
+      }
+
+      const result = await settingsAPI.update(dataToSend)
 
       if (result.success) {
         setMessage({ type: 'success', text: 'Configurações salvas com sucesso!' })
