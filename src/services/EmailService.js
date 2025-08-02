@@ -5,11 +5,15 @@ class EmailService {
   static createTransporter(config) {
     return nodemailer.createTransport({
       ...config,
-      connectionTimeout: 10000, // 10 segundos
-      greetingTimeout: 10000,   // 10 segundos
-      socketTimeout: 15000,     // 15 segundos
-      debug: false,
-      logger: false
+      connectionTimeout: 30000, // 30 segundos
+      greetingTimeout: 30000,   // 30 segundos
+      socketTimeout: 45000,     // 45 segundos
+      debug: true,              // Ativar debug para diagnóstico
+      logger: true,
+      // Tentar diferentes abordagens de conexão
+      pool: false,              // Não usar pool de conexões
+      maxConnections: 1,        // Uma conexão por vez
+      maxMessages: 1            // Uma mensagem por conexão
     })
   }
 
@@ -133,13 +137,56 @@ Enviado em ${new Date().toLocaleString('pt-BR')}
     }
   }
 
+  // Diagnosticar conectividade SMTP
+  static async diagnoseSMTPConnectivity(smtpConfig) {
+    const testPorts = [587, 465, 25, 2525]
+    const results = []
+    
+    for (const port of testPorts) {
+      try {
+        console.log(`[EMAIL] Testando conectividade na porta ${port}...`)
+        const testConfig = { ...smtpConfig, port, secure: port === 465 }
+        const transporter = this.createTransporter(testConfig)
+        
+        await transporter.verify()
+        results.push({ port, success: true, error: null })
+        console.log(`[EMAIL] ✅ Porta ${port} funciona!`)
+        break // Se uma porta funcionar, parar
+      } catch (error) {
+        results.push({ port, success: false, error: error.message })
+        console.log(`[EMAIL] ❌ Porta ${port} falhou: ${error.message}`)
+      }
+    }
+    
+    return results
+  }
+
   // Enviar email de teste
   static async sendTestEmail(smtpConfig, pushoverEmail, userName) {
     try {
-      const transporter = this.createTransporter(smtpConfig)
+      console.log('[EMAIL] Configuração SMTP recebida:', { 
+        host: smtpConfig.host, 
+        port: smtpConfig.port, 
+        secure: smtpConfig.secure,
+        user: smtpConfig.auth.user 
+      })
       
-      // Verificar conectividade primeiro
-      console.log('[EMAIL] Verificando conectividade SMTP...')
+      // Primeiro, diagnosticar conectividade
+      console.log('[EMAIL] Iniciando diagnóstico de conectividade...')
+      const diagnosticResults = await this.diagnoseSMTPConnectivity(smtpConfig)
+      
+      // Verificar se alguma porta funcionou
+      const workingPort = diagnosticResults.find(r => r.success)
+      if (!workingPort) {
+        const errorDetails = diagnosticResults.map(r => `Porta ${r.port}: ${r.error}`).join('\n')
+        throw new Error(`Nenhuma porta SMTP está acessível. Detalhes:\n${errorDetails}`)
+      }
+      
+      // Usar a configuração com a porta que funciona
+      const workingConfig = { ...smtpConfig, port: workingPort.port, secure: workingPort.port === 465 }
+      const transporter = this.createTransporter(workingConfig)
+      
+      console.log(`[EMAIL] Usando porta ${workingPort.port} para envio...`)
       await transporter.verify()
       console.log('[EMAIL] Conectividade SMTP verificada com sucesso')
       
@@ -245,14 +292,27 @@ Enviado em ${new Date().toLocaleString('pt-BR')}
         errorMessage = 'Conexão recusada. Verifique o servidor SMTP e a porta.'
       } else if (error.code === 'ENOTFOUND') {
         errorMessage = 'Servidor SMTP não encontrado. Verifique o endereço do servidor.'
-      } else if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
-        errorMessage = 'Tempo limite esgotado. Verifique sua conexão com a internet e as configurações do servidor.'
-      } else if (error.message.includes('Greeting never received')) {
-        errorMessage = 'Não foi possível estabelecer comunicação com o servidor SMTP. Verifique se a porta está correta (587 para TLS, 465 para SSL).'
+      } else if (error.code === 'ETIMEDOUT' || error.message.includes('timeout') || error.message.includes('Greeting never received')) {
+        errorMessage = `Falha de conectividade SMTP. Possíveis causas:
+• Seu provedor de hospedagem pode estar bloqueando conexões SMTP
+• Firewall bloqueando as portas 587/465/25/2525
+• Configurações de rede restritivas
+• Tente usar um serviço como SendGrid, Mailgun ou Amazon SES como alternativa
+• Se usando Gmail, certifique-se de ter uma "senha de app" configurada`
       } else if (error.message.includes('Invalid login')) {
         errorMessage = 'Credenciais inválidas. Verifique seu email e senha SMTP.'
       } else if (error.message.includes('Authentication failed')) {
         errorMessage = 'Falha na autenticação. Verifique suas credenciais SMTP.'
+      } else if (error.message.includes('Nenhuma porta SMTP está acessível')) {
+        errorMessage = `${error.message}
+
+IMPORTANTE: Seu servidor de hospedagem pode estar bloqueando conexões SMTP.
+Muitos provedores (Railway, Heroku, Vercel) bloqueiam SMTP por segurança.
+
+Soluções recomendadas:
+1. Use um serviço de email dedicado (SendGrid, Mailgun, Amazon SES)
+2. Configure um relay SMTP autorizado
+3. Entre em contato com seu provedor de hospedagem`
       }
       
       return {
