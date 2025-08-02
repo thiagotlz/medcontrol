@@ -15,12 +15,14 @@ class Medication {
   }
 
   // Criar medicamento
-  static async create({ user_id, name, description, dosage, frequency_hours, start_time }) {
+  static async create({ user_id, name, description, dosage, frequency_hours, start_time, duration_days }) {
     try {
+      const started_at = duration_days ? new Date().toISOString().split('T')[0] : null
+      
       const result = await query(
-        `INSERT INTO medications (user_id, name, description, dosage, frequency_hours, start_time) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [user_id, name, description, dosage, frequency_hours, start_time]
+        `INSERT INTO medications (user_id, name, description, dosage, frequency_hours, start_time, duration_days, started_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [user_id, name, description, dosage, frequency_hours, start_time, duration_days, started_at]
       )
       
       return await Medication.findById(result.insertId)
@@ -101,6 +103,17 @@ class Medication {
         values.push(data.start_time)
       }
       
+      if (data.duration_days !== undefined) {
+        fields.push('duration_days = ?')
+        values.push(data.duration_days)
+        
+        // Se está definindo duration_days pela primeira vez, definir started_at
+        if (data.duration_days && !this.started_at) {
+          fields.push('started_at = ?')
+          values.push(new Date().toISOString().split('T')[0])
+        }
+      }
+      
       if (data.active !== undefined) {
         fields.push('active = ?')
         values.push(data.active)
@@ -175,6 +188,55 @@ class Medication {
   // Verificar se pertence ao usuário
   belongsToUser(userId) {
     return this.user_id === userId
+  }
+
+  // Calcular progresso do tratamento
+  getProgress() {
+    if (!this.duration_days || !this.started_at) {
+      return null
+    }
+
+    const startDate = new Date(this.started_at)
+    const currentDate = new Date()
+    const endDate = new Date(startDate)
+    endDate.setDate(endDate.getDate() + this.duration_days)
+
+    const totalDays = this.duration_days
+    const daysPassed = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24))
+    const daysRemaining = Math.max(0, totalDays - daysPassed)
+    
+    const progressPercentage = Math.min(100, Math.max(0, (daysPassed / totalDays) * 100))
+
+    return {
+      totalDays,
+      daysPassed: Math.max(0, daysPassed),
+      daysRemaining,
+      progressPercentage: Math.round(progressPercentage),
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      isCompleted: daysPassed >= totalDays,
+      isActive: daysPassed >= 0 && daysPassed < totalDays
+    }
+  }
+
+  // Verificar se o tratamento está ativo
+  isTreatmentActive() {
+    const progress = this.getProgress()
+    return progress ? progress.isActive : true
+  }
+
+  // Obter status do tratamento
+  getTreatmentStatus() {
+    if (!this.duration_days) {
+      return 'continuous' // Tratamento contínuo
+    }
+
+    const progress = this.getProgress()
+    if (!progress) return 'not_started'
+
+    if (progress.isCompleted) return 'completed'
+    if (progress.isActive) return 'active'
+    return 'not_started'
   }
 }
 

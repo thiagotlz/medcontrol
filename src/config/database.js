@@ -116,6 +116,8 @@ const runMigrations = async () => {
         dosage VARCHAR(100),
         frequency_hours INT NOT NULL,
         start_time TIME NOT NULL,
+        duration_days INT DEFAULT NULL,
+        started_at DATE DEFAULT NULL,
         active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

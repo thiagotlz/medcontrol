@@ -72,14 +72,34 @@ app.use('*', (req, res) => {
   })
 })
 
+// Inicializar banco de dados
+const { initializeDatabase } = require('./src/config/database')
+
 // Inicializar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`)
-  console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`)
-  
-  // Inicializar agendador de tarefas
-  cronScheduler.start()
-  console.log('⏰ Agendador de medicações iniciado')
-})
+const startServer = async () => {
+  try {
+    // Inicializar banco de dados
+    const dbInitialized = await initializeDatabase()
+    
+    if (!dbInitialized) {
+      console.error('❌ Falha ao inicializar banco de dados')
+      process.exit(1)
+    }
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`)
+      console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`)
+      
+      // Inicializar agendador de tarefas
+      cronScheduler.start()
+      console.log('⏰ Agendador de medicações iniciado')
+    })
+  } catch (error) {
+    console.error('❌ Erro ao inicializar servidor:', error)
+    process.exit(1)
+  }
+}
+
+startServer()
 
 module.exports = app

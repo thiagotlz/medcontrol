@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  medcontrol:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-medcontrol}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - PUSHOVER_EMAIL_USER=${PUSHOVER_EMAIL_USER}
+      - PUSHOVER_EMAIL_PASS=${PUSHOVER_EMAIL_PASS}
+      - PUSHOVER_EMAIL_FROM=${PUSHOVER_EMAIL_FROM}
+      - PUSHOVER_EMAIL_TO=${PUSHOVER_EMAIL_TO}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    volumes:
+      - uploads:/app/public/uploads
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME:-medcontrol}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  uploads:

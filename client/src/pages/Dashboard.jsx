@@ -10,10 +10,12 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Activity
+  Activity,
+  Timer
 } from 'lucide-react'
 import { medicationsAPI, settingsAPI } from '../utils/api'
 import { getUser } from '../utils/auth'
+import ProgressChart from '../components/ProgressChart'
 
 export default function Dashboard() {
   const [user] = useState(getUser())
@@ -169,6 +171,34 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Charts de Progresso - apenas para medicamentos com duração definida */}
+      {medications.filter(m => m.progress).length > 0 && (
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h2 className="section-title">
+              <TrendingUp size={20} />
+              Progresso dos Tratamentos
+            </h2>
+            <Link to="/medications" className="section-action">
+              Ver detalhes
+            </Link>
+          </div>
+          
+          <div className="progress-grid">
+            {medications
+              .filter(medication => medication.progress)
+              .slice(0, 3) // Mostrar apenas os 3 primeiros no dashboard
+              .map(medication => (
+                <ProgressChart 
+                  key={medication.id}
+                  medication={medication}
+                />
+              ))
+            }
+          </div>
+        </div>
+      )}
 
       <div className="dashboard-grid">
         {/* Medicamentos ativos */}

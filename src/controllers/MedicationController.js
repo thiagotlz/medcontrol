@@ -13,9 +13,16 @@ class MedicationController {
         active !== 'false' // Por padrão, mostrar apenas ativos
       )
       
+      // Adicionar informações de progresso
+      const medicationsWithProgress = medications.map(medication => ({
+        ...medication,
+        progress: medication.getProgress(),
+        treatmentStatus: medication.getTreatmentStatus()
+      }))
+      
       res.json({
         success: true,
-        data: medications
+        data: medicationsWithProgress
       })
       
     } catch (error) {
@@ -52,7 +59,11 @@ class MedicationController {
       
       res.json({
         success: true,
-        data: medication
+        data: {
+          ...medication,
+          progress: medication.getProgress(),
+          treatmentStatus: medication.getTreatmentStatus()
+        }
       })
       
     } catch (error) {
@@ -67,7 +78,7 @@ class MedicationController {
   // Criar medicamento
   static async create(req, res) {
     try {
-      const { name, description, dosage, frequency_hours, start_time } = req.body
+      const { name, description, dosage, frequency_hours, start_time, duration_days } = req.body
       const userId = req.user.id
       
       // Validações
@@ -93,6 +104,17 @@ class MedicationController {
           message: 'Formato de horário inválido. Use HH:MM'
         })
       }
+
+      // Validação de duration_days se fornecido
+      if (duration_days !== undefined && duration_days !== null && duration_days !== '') {
+        const days = parseInt(duration_days)
+        if (isNaN(days) || days < 1 || days > 365) {
+          return res.status(400).json({
+            success: false,
+            message: 'Duração deve ser entre 1 e 365 dias'
+          })
+        }
+      }
       
       // Criar medicamento
       const medication = await Medication.create({
@@ -101,7 +123,8 @@ class MedicationController {
         description: description?.trim() || null,
         dosage: dosage?.trim() || null,
         frequency_hours: parseInt(frequency_hours),
-        start_time
+        start_time,
+        duration_days: duration_days ? parseInt(duration_days) : null
       })
       
       // Criar agendamentos iniciais (próximos 7 dias)
@@ -111,7 +134,11 @@ class MedicationController {
       res.status(201).json({
         success: true,
         message: 'Medicamento criado com sucesso',
-        data: medication
+        data: {
+          ...medication,
+          progress: medication.getProgress(),
+          treatmentStatus: medication.getTreatmentStatus()
+        }
       })
       
     } catch (error) {
@@ -127,7 +154,7 @@ class MedicationController {
   static async update(req, res) {
     try {
       const { id } = req.params
-      const { name, description, dosage, frequency_hours, start_time, active } = req.body
+      const { name, description, dosage, frequency_hours, start_time, duration_days, active } = req.body
       const userId = req.user.id
       
       const medication = await Medication.findById(id)
@@ -164,6 +191,17 @@ class MedicationController {
           })
         }
       }
+
+      // Validação de duration_days se fornecido
+      if (duration_days !== undefined && duration_days !== null && duration_days !== '') {
+        const days = parseInt(duration_days)
+        if (isNaN(days) || days < 1 || days > 365) {
+          return res.status(400).json({
+            success: false,
+            message: 'Duração deve ser entre 1 e 365 dias'
+          })
+        }
+      }
       
       // Atualizar medicamento
       const updatedMedication = await medication.update({
@@ -172,6 +210,7 @@ class MedicationController {
         dosage: dosage?.trim(),
         frequency_hours: frequency_hours ? parseInt(frequency_hours) : undefined,
         start_time,
+        duration_days: duration_days !== undefined ? (duration_days ? parseInt(duration_days) : null) : undefined,
         active
       })
       
@@ -193,7 +232,11 @@ class MedicationController {
       res.json({
         success: true,
         message: 'Medicamento atualizado com sucesso',
-        data: updatedMedication
+        data: {
+          ...updatedMedication,
+          progress: updatedMedication.getProgress(),
+          treatmentStatus: updatedMedication.getTreatmentStatus()
+        }
       })
       
     } catch (error) {
