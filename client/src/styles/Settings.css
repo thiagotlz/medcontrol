@@ -5,14 +5,7 @@
   padding: 0;
 }
 
-.settings-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  text-align: center;
-}
+/* Loading está no global.css */
 
 /* ===== HEADER ===== */
 .settings-header {
@@ -43,8 +36,10 @@
 
 /* ===== STATUS DAS CONFIGURAÇÕES ===== */
 .settings-status {
-  background: var(--surface-primary);
-  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--card-border);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
@@ -96,14 +91,14 @@
 }
 
 .status-summary.success {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--color-success-light);
+  border: 1px solid var(--color-success);
   color: var(--color-success);
 }
 
 .status-summary.warning {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: var(--color-warning-light);
+  border: 1px solid var(--color-warning);
   color: var(--color-warning);
 }
 
@@ -115,8 +110,10 @@
 }
 
 .settings-section {
-  background: var(--surface-primary);
-  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--card-border);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-sm);
@@ -139,11 +136,7 @@
   line-height: 1.5;
 }
 
-.input-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-}
+/* input-row está no global.css */
 
 .checkbox-label {
   display: flex;
@@ -164,23 +157,7 @@
   font-weight: var(--font-weight-medium);
 }
 
-.password-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  border-radius: var(--border-radius-sm);
-  transition: color var(--transition-fast);
-}
-
-.password-toggle:hover {
-  color: var(--text-primary);
-}
+/* password-toggle removido - não usado aqui */
 
 /* ===== MENSAGENS ===== */
 .message {
@@ -194,14 +171,14 @@
 }
 
 .message.success {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--color-success-light);
+  border: 1px solid var(--color-success);
   color: var(--color-success);
 }
 
 .message.error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: var(--color-error-light);
+  border: 1px solid var(--color-error);
   color: var(--color-error);
 }
 
@@ -219,8 +196,10 @@
 
 /* ===== GUIA DE CONFIGURAÇÃO ===== */
 .settings-help {
-  background: var(--surface-primary);
-  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--card-border);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xl);
   margin-top: var(--spacing-xl);
@@ -334,20 +313,5 @@
   }
 }
 
-/* ===== TEMA ESCURO ESPECÍFICO ===== */
-[data-theme="dark"] .settings-section,
-[data-theme="dark"] .settings-status,
-[data-theme="dark"] .settings-help,
-[data-theme="dark"] .settings-actions {
-  background: var(--surface-primary);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .status-item {
-  background: var(--surface-secondary);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .checkbox-field {
-  accent-color: var(--color-primary);
-}
+/* ===== TEMA ESCURO ===== */
+/* Temas já são gerenciados pelo global.css */

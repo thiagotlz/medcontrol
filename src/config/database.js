@@ -132,6 +132,7 @@ const runMigrations = async () => {
         medication_id INT NOT NULL,
         scheduled_time DATETIME NOT NULL,
         status ENUM('pending', 'sent', 'taken', 'missed') DEFAULT 'pending',
+        taken_at DATETIME NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (medication_id) REFERENCES medications(id) ON DELETE CASCADE,
@@ -173,6 +174,21 @@ const runMigrations = async () => {
         UNIQUE KEY unique_user_settings (user_id)
       )
     `)
+    
+    // Adicionar coluna taken_at se não existir
+    try {
+      await query(`
+        ALTER TABLE medication_schedules 
+        ADD COLUMN taken_at DATETIME NULL
+      `)
+      console.log('✅ Coluna taken_at adicionada à tabela medication_schedules')
+    } catch (error) {
+      if (error.code === 'ER_DUP_FIELDNAME') {
+        console.log('ℹ️ Coluna taken_at já existe na tabela medication_schedules')
+      } else {
+        console.error('❌ Erro ao adicionar coluna taken_at:', error.message)
+      }
+    }
     
     console.log('✅ Migrations executadas com sucesso')
   } catch (error) {

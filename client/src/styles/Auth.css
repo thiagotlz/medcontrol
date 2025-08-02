@@ -7,6 +7,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 .auth-background {
@@ -15,7 +16,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   z-index: 0;
 }
 
@@ -45,12 +46,13 @@
 
 /* ===== CARD DE AUTENTICAÇÃO ===== */
 .auth-card {
-  background: var(--surface-primary);
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--card-border);
   border-radius: var(--border-radius-xl);
   box-shadow: var(--shadow-xl);
   padding: var(--spacing-2xl);
-  backdrop-filter: blur(var(--blur-lg));
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* ===== HEADER ===== */
@@ -98,21 +100,23 @@
 /* ===== MENSAGENS DE ERRO ===== */
 .auth-error {
   padding: var(--spacing-md);
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: var(--color-error-light);
+  border: 1px solid var(--color-error);
   border-radius: var(--border-radius-md);
   color: var(--color-error);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   text-align: center;
 }
 
 .auth-success {
   padding: var(--spacing-md);
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--color-success-light);
+  border: 1px solid var(--color-success);
   border-radius: var(--border-radius-md);
   color: var(--color-success);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   text-align: center;
 }
 
@@ -238,25 +242,8 @@
   }
 }
 
-/* ===== TEMA ESCURO ===== */
-[data-theme="dark"] .auth-card {
-  background: rgba(17, 24, 39, 0.95);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .auth-background {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
-}
-
-[data-theme="dark"] .auth-error {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-[data-theme="dark"] .auth-success {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.3);
-}
+/* ===== ADAPTAÇÕES DE TEMA ===== */
+/* Os temas já são gerenciados pelo global.css */
 
 /* ===== ANIMAÇÕES ADICIONAIS ===== */
 .auth-card {

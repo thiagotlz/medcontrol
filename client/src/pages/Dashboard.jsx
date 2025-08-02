@@ -85,9 +85,13 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-secondary">Carregando dashboard...</p>
+      <div className="loading-container">
+        <div className="loading-container-column">
+          <div className="animate-spin">
+            <Activity size={48} className="loading-icon" />
+          </div>
+          <p className="loading-text">Carregando dashboard...</p>
+        </div>
       </div>
     )
   }

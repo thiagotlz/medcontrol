@@ -133,9 +133,13 @@ export default function Medications() {
 
   if (loading) {
     return (
-      <div className="medications-loading">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-secondary">Carregando medicamentos...</p>
+      <div className="loading-container">
+        <div className="loading-container-column">
+          <div className="animate-spin">
+            <Pill size={48} className="loading-icon" />
+          </div>
+          <p className="loading-text">Carregando medicamentos...</p>
+        </div>
       </div>
     )
   }

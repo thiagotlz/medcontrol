@@ -10,6 +10,11 @@ const cronScheduler = require('./src/services/cronScheduler')
 const app = express()
 const PORT = process.env.PORT || 3000
 
+// Trust proxy - necessário para rate limiting e IP detection em produção
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1)
+}
+
 // Middlewares de segurança
 app.use(helmet({
   contentSecurityPolicy: false,
