@@ -46,15 +46,6 @@ app.use('/api/auth', require('./src/routes/auth.routes'))
 app.use('/api/medications', require('./src/routes/medication.routes'))
 app.use('/api/settings', require('./src/routes/settings.routes'))
 
-// Serve static files from React app in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client/dist')))
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/dist/index.html'))
-  })
-}
-
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err.stack)
@@ -64,13 +55,23 @@ app.use((err, req, res, next) => {
   })
 })
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Rota não encontrada' 
+// Serve static files from React app in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client/dist')))
+  
+  // Catch all handler para React Router (deve ser o último)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/dist/index.html'))
   })
-})
+} else {
+  // 404 handler para desenvolvimento
+  app.use('*', (req, res) => {
+    res.status(404).json({ 
+      success: false, 
+      message: 'Rota não encontrada' 
+    })
+  })
+}
 
 // Inicializar banco de dados
 const { initializeDatabase } = require('./src/config/database')
