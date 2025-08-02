@@ -12,6 +12,7 @@ import {
 import { medicationsAPI, settingsAPI } from '../utils/api'
 import { getUser } from '../utils/auth'
 import ProgressChart from '../components/ProgressChart'
+import '../styles/Dashboard.css'
 
 export default function Dashboard() {
   const [user] = useState(getUser())
