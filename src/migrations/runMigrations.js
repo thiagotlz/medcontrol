@@ -46,6 +46,18 @@ async function runMigrations() {
       console.log('✓ Nenhum registro para atualizar')
     }
 
+    // Migration 4: Alterar coluna frequency_hours para DECIMAL
+    try {
+      await query(`
+        ALTER TABLE medications 
+        MODIFY COLUMN frequency_hours DECIMAL(10,2) NOT NULL
+      `)
+      console.log('✅ Coluna frequency_hours alterada para DECIMAL com sucesso')
+    } catch (error) {
+      console.log('❌ Erro ao alterar coluna frequency_hours:', error.message)
+      // Não falhar se já foi alterada
+    }
+
     console.log('✅ Todas as migrations executadas com sucesso!')
     
   } catch (error) {

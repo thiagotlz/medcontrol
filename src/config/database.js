@@ -114,7 +114,7 @@ const runMigrations = async () => {
         name VARCHAR(255) NOT NULL,
         description TEXT,
         dosage VARCHAR(100),
-        frequency_hours INT NOT NULL,
+        frequency_hours DECIMAL(10,2) NOT NULL,
         start_time TIME NOT NULL,
         duration_days INT DEFAULT NULL,
         started_at DATE DEFAULT NULL,

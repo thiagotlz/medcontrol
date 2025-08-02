@@ -68,12 +68,15 @@ class MedicationSchedule {
   // Buscar por medicamento
   static async findByMedicationId(medicationId, limit = 10) {
     try {
+      // Garantir que limit é um número inteiro válido
+      const safeLimit = parseInt(limit) || 10
+      
       const schedules = await query(
         `SELECT * FROM medication_schedules 
          WHERE medication_id = ? 
          ORDER BY scheduled_time DESC 
-         LIMIT ?`,
-        [medicationId, limit]
+         LIMIT ${safeLimit}`,
+        [medicationId]
       )
       
       return schedules.map(schedule => new MedicationSchedule(schedule))
