@@ -11,7 +11,6 @@ import {
   User,
   Shield
 } from 'lucide-react'
-import '../styles/LayoutPadrao.css'
 
 export default function LayoutPadrao() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)

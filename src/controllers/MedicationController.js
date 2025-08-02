@@ -99,12 +99,12 @@ class MedicationController {
         })
       }
       
-      // Validar formato do horário (HH:MM)
+      // Validar formato do horário (HH:MM ou H:MM)
       const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
-      if (!timeRegex.test(start_time)) {
+      if (!start_time || !timeRegex.test(start_time.trim())) {
         return res.status(400).json({
           success: false,
-          message: 'Formato de horário inválido. Use HH:MM'
+          message: `Formato de horário inválido. Recebido: "${start_time}". Use HH:MM (ex: 08:30, 14:00)`
         })
       }
 
