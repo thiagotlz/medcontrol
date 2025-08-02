@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer')
 class EmailService {
   // Criar transporter com configurações personalizadas
   static createTransporter(config) {
-    return nodemailer.createTransporter(config)
+    return nodemailer.createTransport(config)
   }
 
   // Enviar email de medicação
