@@ -9,6 +9,8 @@ class Medication {
     this.dosage = data.dosage
     this.frequency_hours = data.frequency_hours
     this.start_time = data.start_time
+    this.duration_days = data.duration_days
+    this.started_at = data.started_at
     this.active = data.active
     this.created_at = data.created_at
     this.updated_at = data.updated_at

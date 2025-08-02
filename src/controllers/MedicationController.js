@@ -14,11 +14,29 @@ class MedicationController {
       )
       
       // Adicionar informações de progresso
-      const medicationsWithProgress = medications.map(medication => ({
-        ...medication,
-        progress: medication.getProgress(),
-        treatmentStatus: medication.getTreatmentStatus()
-      }))
+      const medicationsWithProgress = medications.map(medication => {
+        // Converter instância para objeto plain
+        const medicationData = {
+          id: medication.id,
+          user_id: medication.user_id,
+          name: medication.name,
+          description: medication.description,
+          dosage: medication.dosage,
+          frequency_hours: medication.frequency_hours,
+          start_time: medication.start_time,
+          duration_days: medication.duration_days,
+          started_at: medication.started_at,
+          active: medication.active,
+          created_at: medication.created_at,
+          updated_at: medication.updated_at
+        }
+        
+        return {
+          ...medicationData,
+          progress: medication.getProgress(),
+          treatmentStatus: medication.getTreatmentStatus()
+        }
+      })
       
       res.json({
         success: true,
@@ -57,10 +75,25 @@ class MedicationController {
         })
       }
       
+      const medicationData = {
+        id: medication.id,
+        user_id: medication.user_id,
+        name: medication.name,
+        description: medication.description,
+        dosage: medication.dosage,
+        frequency_hours: medication.frequency_hours,
+        start_time: medication.start_time,
+        duration_days: medication.duration_days,
+        started_at: medication.started_at,
+        active: medication.active,
+        created_at: medication.created_at,
+        updated_at: medication.updated_at
+      }
+      
       res.json({
         success: true,
         data: {
-          ...medication,
+          ...medicationData,
           progress: medication.getProgress(),
           treatmentStatus: medication.getTreatmentStatus()
         }
@@ -210,11 +243,26 @@ class MedicationController {
         await MedicationSchedule.createMultipleForMedication(medication.id, scheduleTimes)
       }
       
+      const medicationData = {
+        id: medication.id,
+        user_id: medication.user_id,
+        name: medication.name,
+        description: medication.description,
+        dosage: medication.dosage,
+        frequency_hours: medication.frequency_hours,
+        start_time: medication.start_time,
+        duration_days: medication.duration_days,
+        started_at: medication.started_at,
+        active: medication.active,
+        created_at: medication.created_at,
+        updated_at: medication.updated_at
+      }
+      
       res.status(201).json({
         success: true,
         message: 'Medicamento criado com sucesso',
         data: {
-          ...medication,
+          ...medicationData,
           progress: medication.getProgress(),
           treatmentStatus: medication.getTreatmentStatus()
         }
@@ -235,6 +283,16 @@ class MedicationController {
       const { id } = req.params
       const { name, description, dosage, frequency_hours, start_time, duration_days, active } = req.body
       const userId = req.user.id
+      
+      console.log('[UPDATE] Dados recebidos:', { 
+        name, 
+        description, 
+        dosage, 
+        frequency_hours, 
+        start_time, 
+        duration_days, 
+        active 
+      })
       
       const medication = await Medication.findById(id)
       
@@ -308,11 +366,26 @@ class MedicationController {
         await MedicationSchedule.createMultipleForMedication(id, scheduleTimes)
       }
       
+      const medicationData = {
+        id: updatedMedication.id,
+        user_id: updatedMedication.user_id,
+        name: updatedMedication.name,
+        description: updatedMedication.description,
+        dosage: updatedMedication.dosage,
+        frequency_hours: updatedMedication.frequency_hours,
+        start_time: updatedMedication.start_time,
+        duration_days: updatedMedication.duration_days,
+        started_at: updatedMedication.started_at,
+        active: updatedMedication.active,
+        created_at: updatedMedication.created_at,
+        updated_at: updatedMedication.updated_at
+      }
+      
       res.json({
         success: true,
         message: 'Medicamento atualizado com sucesso',
         data: {
-          ...updatedMedication,
+          ...medicationData,
           progress: updatedMedication.getProgress(),
           treatmentStatus: updatedMedication.getTreatmentStatus()
         }
