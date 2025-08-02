@@ -125,15 +125,31 @@ class UserSettings {
       return null
     }
     
-    return {
+    const port = parseInt(this.smtp_port)
+    const isSecure = this.smtp_secure === true || this.smtp_secure === 1
+    
+    const config = {
       host: this.smtp_host,
-      port: parseInt(this.smtp_port),
-      secure: this.smtp_secure === true || this.smtp_secure === 1,
+      port: port,
+      secure: isSecure, // true para porta 465, false para outras
       auth: {
         user: this.smtp_user,
         pass: this.smtp_password
       }
     }
+    
+    // Para porta 587, usar STARTTLS
+    if (port === 587) {
+      config.secure = false
+      config.requireTLS = true
+    }
+    
+    // Configurações específicas para provedores conhecidos
+    if (this.smtp_host.includes('gmail.com')) {
+      config.service = 'gmail'
+    }
+    
+    return config
   }
 
   // Serializar removendo dados sensíveis

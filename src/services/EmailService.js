@@ -3,7 +3,14 @@ const nodemailer = require('nodemailer')
 class EmailService {
   // Criar transporter com configurações personalizadas
   static createTransporter(config) {
-    return nodemailer.createTransport(config)
+    return nodemailer.createTransport({
+      ...config,
+      connectionTimeout: 10000, // 10 segundos
+      greetingTimeout: 10000,   // 10 segundos
+      socketTimeout: 15000,     // 15 segundos
+      debug: false,
+      logger: false
+    })
   }
 
   // Enviar email de medicação
@@ -131,6 +138,11 @@ Enviado em ${new Date().toLocaleString('pt-BR')}
     try {
       const transporter = this.createTransporter(smtpConfig)
       
+      // Verificar conectividade primeiro
+      console.log('[EMAIL] Verificando conectividade SMTP...')
+      await transporter.verify()
+      console.log('[EMAIL] Conectividade SMTP verificada com sucesso')
+      
       const subject = '🧪 Teste de Configuração - MedControl'
       
       const htmlContent = `
@@ -225,9 +237,28 @@ Enviado em ${new Date().toLocaleString('pt-BR')}
       
     } catch (error) {
       console.error('[EMAIL] Erro ao enviar teste:', error)
+      
+      let errorMessage = error.message
+      
+      // Mensagens de erro mais específicas
+      if (error.code === 'ECONNREFUSED') {
+        errorMessage = 'Conexão recusada. Verifique o servidor SMTP e a porta.'
+      } else if (error.code === 'ENOTFOUND') {
+        errorMessage = 'Servidor SMTP não encontrado. Verifique o endereço do servidor.'
+      } else if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+        errorMessage = 'Tempo limite esgotado. Verifique sua conexão com a internet e as configurações do servidor.'
+      } else if (error.message.includes('Greeting never received')) {
+        errorMessage = 'Não foi possível estabelecer comunicação com o servidor SMTP. Verifique se a porta está correta (587 para TLS, 465 para SSL).'
+      } else if (error.message.includes('Invalid login')) {
+        errorMessage = 'Credenciais inválidas. Verifique seu email e senha SMTP.'
+      } else if (error.message.includes('Authentication failed')) {
+        errorMessage = 'Falha na autenticação. Verifique suas credenciais SMTP.'
+      }
+      
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        originalError: error.message
       }
     }
   }
